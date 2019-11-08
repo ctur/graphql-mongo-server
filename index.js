@@ -3,6 +3,8 @@ const mongoose = require("mongoose");
 
 const { PORT, DB } = require("./core/config");
 
+import getUserId from "./src/utils/getUserId";
+
 // Mongo Models
 import Post from "./src/models/post";
 import User from "./src/models/user";
@@ -15,12 +17,14 @@ import Mutation from "./src/resolvers/Mutation";
 const typeDefs = gql`
   type Query {
     users: [User]
+    me: User!
   }
 
   type User {
     _id: ID!
     name: String!
     email: String!
+    posts: [Post!]!
     password: String!
     updatedAt: String!
     createdAt: String!
@@ -79,6 +83,14 @@ mongoose
 const server = new ApolloServer({
   typeDefs,
   resolvers: {
+    Query: {
+      async me(parent, args, { User, req }, info) {
+        const userId = getUserId(req);
+        return await User.findOne({
+          _id: userId
+        }).lean();
+      }
+    },
     Mutation,
     Post: {
       async author(parent, args, { User }, info) {
@@ -86,6 +98,14 @@ const server = new ApolloServer({
         return await User.findOne({
           _id: author
         }).lean();
+      }
+    },
+    User: {
+      async posts(parent, args, { Post }, info) {
+        const { _id } = parent;
+        const posts = await Post.find({ author: _id }).lean();
+        console.log(posts);
+        return posts;
       }
     }
   },
