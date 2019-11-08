@@ -2,6 +2,7 @@ import bcrypt from "bcryptjs";
 
 import generateToken from "../utils/generateToken";
 import hashPassword from "../utils/hashPassword";
+import getUserId from "../utils/getUserId";
 
 const Mutation = {
   async login(parent, args, { User }, info) {
@@ -34,8 +35,18 @@ const Mutation = {
     console.log(user);
     return {
       user,
-      token: generateToken(user.id)
+      token: generateToken(user._id)
     };
+  },
+  async createPost(parent, args, { Post, req }, info) {
+    const { data } = args;
+    const userId = getUserId(req);
+    const post = await Post.create({
+      ...data,
+      author: userId
+    });
+    console.log(post);
+    return post;
   }
 };
 
