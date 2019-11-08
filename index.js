@@ -3,10 +3,8 @@ const mongoose = require("mongoose");
 
 const { PORT, DB } = require("./core/config");
 
-import getUserId from "./src/utils/getUserId";
-
 // Mongo Models
-import Book from "./src/models/post";
+import Post from "./src/models/post";
 import User from "./src/models/user";
 
 import Mutation from "./src/resolvers/Mutation";
@@ -15,19 +13,8 @@ import Mutation from "./src/resolvers/Mutation";
 // that together define the "shape" of queries that are executed against
 // your data.
 const typeDefs = gql`
-  # Comments in GraphQL strings (such as this one) start with the hash (#) symbol.
-
-  # This "Book" type defines the queryable fields for every book in our data source.
-  type Book {
-    title: String
-    author: String
-  }
-
-  # The "Query" type is special: it lists all of the available queries that
-  # clients can execute, along with the return type for each. In this
-  # case, the "books" query returns an array of zero or more Books (defined above).
   type Query {
-    books: [Book]
+    users: [User]
   }
 
   type User {
@@ -68,7 +55,6 @@ const typeDefs = gql`
   input CreatePostInput {
     title: String!
     body: String!
-    published: Boolean!
   }
 
   type AuthPayload {
@@ -77,14 +63,7 @@ const typeDefs = gql`
   }
 `;
 
-// Resolvers define the technique for fetching the types defined in the
-// schema. This resolver retrieves books from the "books" array above.
-// const resolvers = {
-//   Query: {
-//     books: () => books
-//   }
-// };
-
+// Mongoose - MongoDB connection
 mongoose
   .connect(DB, {
     keepAlive: 1,
@@ -92,7 +71,7 @@ mongoose
     useUnifiedTopology: true,
     useCreateIndex: true
   })
-  .then(() => console.log("DB connected"))
+  .then(() => console.log("🗄  Connected to MongoDB"))
   .catch(error => console.log(error));
 
 // The ApolloServer constructor requires two parameters; your schema
@@ -100,7 +79,15 @@ mongoose
 const server = new ApolloServer({
   typeDefs,
   resolvers: {
-    Mutation
+    Mutation,
+    Post: {
+      async author(parent, args, { User }, info) {
+        const { author } = parent;
+        return await User.findOne({
+          _id: author
+        }).lean();
+      }
+    }
   },
   context: ({ req }) => {
     // get the user token from the headers
@@ -110,7 +97,7 @@ const server = new ApolloServer({
     // // try to retrieve a user with the token
     // const user = getUserId(token);
     // add the authenticated user to context
-    return { Book, User, req };
+    return { Post, User, req };
   }
 });
 
