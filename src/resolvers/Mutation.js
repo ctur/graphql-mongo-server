@@ -38,13 +38,19 @@ const Mutation = {
       token: generateToken(user._id)
     };
   },
-  async createPost(parent, args, { Post, req }, info) {
+  async createPost(parent, args, { Post, User, req }, info) {
     const { data } = args;
     const userId = getUserId(req);
+    const user = await User.findOne({
+      _id: userId
+    });
+    console.log(user);
     const post = await Post.create({
       ...data,
       author: userId
     });
+    user.posts.push(post);
+    user.save();
     console.log(post);
     return post;
   }
