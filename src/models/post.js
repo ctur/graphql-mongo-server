@@ -6,7 +6,8 @@ const PostSchema = new mongoose.Schema(
   {
     title: { type: String, default: "" },
     body: { type: String, default: "" },
-    author: {type: mongoose.Schema.Types.ObjectId, ref: "User"}
+    author: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    comments: [{ type: mongoose.Schema.Types.ObjectId, ref: "Comment" }]
   },
   { timestamps: true }
 );
