@@ -44,15 +44,32 @@ const Mutation = {
     const user = await User.findOne({
       _id: userId
     });
-    console.log(user);
     const post = await Post.create({
       ...data,
       author: userId
     });
     user.posts.push(post);
     user.save();
-    console.log(post);
     return post;
+  },
+  async createComment(parent, args, { Post, User, Comment, req }, info) {
+    const { data } = args;
+    const userId = getUserId(req);
+    const comment = await Comment.create({
+      ...data,
+      author: userId
+    });
+    const user = await User.findOne({
+      _id: userId
+    });
+    user.comments.push(comment);
+    user.save();
+    const post = await Post.findOne({
+      _id: data.postId
+    });
+    post.comments.push(comment);
+    post.save();
+    return comment;
   }
 };
 
